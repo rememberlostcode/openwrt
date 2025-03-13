@@ -1,0 +1,45 @@
+name: Build OpenWrt
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Set up dependencies
+      run: |
+        sudo apt-get update && sudo apt-get install -y build-essential gawk m4 unzip libncurses5-dev zlib1g-dev git ccache gettext libssl-dev xsltproc rsync wget curl
+        sudo apt-get install -y python3 python3-pip python3-setuptools python3-yaml
+        
+    - name: Clone OpenWrt source code
+      run: |
+        git clone https://github.com/openwrt/openwrt.git openwrt-source
+        cd openwrt-source
+        # 如果有特定分支或标签，可以在这里指定
+        git checkout v24.10.0
+        
+    - name: Prepare configuration
+      working-directory: openwrt-source
+      run: |
+        make defconfig
+        
+    - name: Compile OpenWrt
+      working-directory: openwrt-source
+      run: |
+        make download
+        make -j$(nproc)
+        
+    - name: Archive artifacts
+      if: success()
+      uses: actions/upload-artifact@v2
+      with:
+        name: openwrt-firmware
+        path: openwrt-source/bin/targets/
