@@ -1,125 +1,55 @@
-#=================================================
-# https://github.com/P3TERX/Actions-OpenWrt
-# Description: Build OpenWrt using GitHub Actions
-# Lisence: MIT
-# Author: P3TERX
-# Modify: Gary
-# Blog: https://p3terx.com
-#=================================================
-
 name: Build OpenWrt
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:  # 手动触发
   push:
-    branches: [ "main" ]
-#  schedule:
-#    - cron: 0 8 * * 5
-  watch:
-    types: [started]
-
-env:
-  #REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_URL: https://github.com/openwrt/openwrt
-  REPO_BRANCH: master
-  REPO_TAG: v24.10.0
-  CONFIG_FILE: .config
-  DIY_SH: diy.sh
-  FREE_UP_DISK: false
-  SSH_ACTIONS: false
-  UPLOAD_BIN_DIR: false
-  UPLOAD_FIRMWARE: true
-  TZ: Asia/Shanghai
+    paths:
+      - '.config'     # 当.config文件变更时自动触发
+  schedule:
+    - cron: '0 0 * * *'  # 每天UTC 0点自动编译（北京时间8点）
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 360  # 最长6小时
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Initialization environment
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo swapoff /swapfile
-        sudo rm -rf /swapfile /etc/apt/sources.list.d/*
-        sudo -E apt-get -qq update
-        sudo -E apt-get -qq install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler
-        curl -fsSL https://raw.githubusercontent.com/P3TERX/dotfiles/master/.bashrc >> ~/.bashrc
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev
 
-    - name: Free up disk space
-      if: env.FREE_UP_DISK == 'true'
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo rm -rf /usr/share/dotnet
-        docker rmi `docker images -q`
-        sudo -E apt-get -q purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php*
-        sudo -E apt-get -qq autoremove --purge
-        sudo -E apt-get -qq clean
+      - name: Initialize OpenWrt
+        env:
+          REPO_URL: https://github.com/rememberlostcode/openwrt.git  # 替换为你的仓库
+          REPO_BRANCH: master
+        run: |
+          git clone --depth=1 -b $REPO_BRANCH $REPO_CODE openwrt
+          cd openwrt
 
-    - name: Clone source code
-      run: |
-        git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt 
-        git checkout $REPO_TAG
+      - name: Update feeds and apply config
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          [ -f ../.config ] && cp ../.config .config || make defconfig
 
-    - name: Update feeds
-      run: cd openwrt && ./scripts/feeds update -a
+      - name: Customize via SSH (可选)
+        if: ${{ env.SSH_ACTIONS == 'true' }}
+        uses: mxschmitt/action-tmate@v3
+        env:
+          SSH_ACTIONS: false  # 设为true启用SSH调试
 
-    - name: Install feeds
-      run: cd openwrt && ./scripts/feeds install -a
+      - name: Compile OpenWrt
+        run: |
+          cd openwrt
+          make -j$(nproc) V=s
 
-    - name: Load custom configuration
-      run: |
-        [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_SH
-        cd openwrt
-        ../$DIY_SH
-        make defconfig
-
-#    - name: SSH connection to Actions
-#      uses: P3TERX/debugger-action@master
-#      if: env.SSH_ACTIONS == 'true'
-
-    - name: Download package
-      id: package
-      run: |
-        cd openwrt
-        make download -j8
-        find dl -size -1024c -exec ls -l {} \;
-        find dl -size -1024c -exec rm -f {} \;
-
-    - name: Compile the firmware
-      id: compile
-      run: |
-        cd openwrt
-        echo -e "$(nproc) thread compile"
-        make -j$(nproc) || make -j1 V=s
-        echo "::set-output name=status::success"
-
-    - name: Upload bin directory
-      uses: actions/upload-artifact@master
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
-      with:
-        name: OpenWrt_directory
-        path: openwrt/bin
-
-    - name: Organize files
-      id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
-        echo "::set-env name=FIRMWARE::$(pwd)"
-        echo "::set-output name=status::success"
-
-    - name: Upload firmware directory
-      uses: actions/upload-artifact@master
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        name: OpenWrt_firmware
-        path: ${{ env.FIRMWARE }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: openwrt-binaries
+          path: openwrt/bin/targets/*
