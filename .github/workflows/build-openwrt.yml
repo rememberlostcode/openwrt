@@ -13,8 +13,7 @@ on:
   release:
     types: [published]
   push:
-    branches:
-      - master
+    branches: [ "main" ]
     paths:
       - '.config'
 #  schedule:
