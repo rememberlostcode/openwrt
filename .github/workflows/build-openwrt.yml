@@ -29,6 +29,7 @@ jobs:
         run: |
           git clone --depth=1 -b $REPO_BRANCH $REPO_CODE openwrt
           cd openwrt
+          git checkout v24.10.0
 
       - name: Update feeds and apply config
         run: |
