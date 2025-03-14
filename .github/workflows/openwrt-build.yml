@@ -27,7 +27,7 @@ jobs:
           REPO_URL: https://github.com/rememberlostcode/openwrt.git  # 替换为你的仓库
           REPO_BRANCH: v24.10.0
         run: |
-          git clone --depth=1 -b $REPO_BRANCH $REPO_CODE openwrt
+          git clone --depth=1 $REPO_URL -b $REPO_BRANCH openwrt
           cd openwrt
 
       - name: Update feeds and apply config
