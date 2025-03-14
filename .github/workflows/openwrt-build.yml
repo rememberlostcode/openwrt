@@ -1,0 +1,55 @@
+name: Build OpenWrt
+
+on:
+  workflow_dispatch:  # 手动触发
+  push:
+    paths:
+      - '.config'     # 当.config文件变更时自动触发
+  schedule:
+    - cron: '0 0 * * *'  # 每天UTC 0点自动编译（北京时间8点）
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 最长6小时
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses5-dev
+
+      - name: Initialize OpenWrt
+        env:
+          REPO_URL: https://github.com/rememberlostcode/openwrt.git  # 替换为你的仓库
+          REPO_BRANCH: master
+        run: |
+          git clone --depth=1 -b $REPO_BRANCH $REPO_CODE openwrt
+          cd openwrt
+
+      - name: Update feeds and apply config
+        run: |
+          cd openwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          [ -f ../.config ] && cp ../.config .config || make defconfig
+
+      - name: Customize via SSH (可选)
+        if: ${{ env.SSH_ACTIONS == 'true' }}
+        uses: mxschmitt/action-tmate@v5
+        env:
+          SSH_ACTIONS: false  # 设为true启用SSH调试
+
+      - name: Compile OpenWrt
+        run: |
+          cd openwrt
+          make -j$(nproc) V=s
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: openwrt-binaries
+          path: openwrt/bin/targets/*
