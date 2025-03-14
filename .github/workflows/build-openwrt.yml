@@ -40,7 +40,7 @@ jobs:
 
       - name: Customize via SSH (可选)
         if: ${{ env.SSH_ACTIONS == 'true' }}
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@v5
         env:
           SSH_ACTIONS: false  # 设为true启用SSH调试
 
@@ -50,7 +50,7 @@ jobs:
           make -j$(nproc) V=s
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: openwrt-binaries
           path: openwrt/bin/targets/*
