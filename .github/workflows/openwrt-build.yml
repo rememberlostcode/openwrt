@@ -25,7 +25,7 @@ jobs:
       - name: Initialize OpenWrt
         env:
           REPO_URL: https://github.com/rememberlostcode/openwrt.git  # 替换为你的仓库
-          REPO_BRANCH: master
+          REPO_BRANCH: v24.10.0
         run: |
           git clone --depth=1 -b $REPO_BRANCH $REPO_CODE openwrt
           cd openwrt
@@ -39,7 +39,7 @@ jobs:
 
       - name: Customize via SSH (可选)
         if: ${{ env.SSH_ACTIONS == 'true' }}
-        uses: mxschmitt/action-tmate@v5
+        uses: mxschmitt/action-tmate@v3.19
         env:
           SSH_ACTIONS: false  # 设为true启用SSH调试
 
