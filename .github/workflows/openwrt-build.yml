@@ -5,8 +5,8 @@ on:
   push:
     paths:
       - '.config'     # 当.config文件变更时自动触发
-  schedule:
-    - cron: '0 0 * * *'  # 每天UTC 0点自动编译（北京时间8点）
+  #schedule:
+  #  - cron: '0 0 * * *'  # 每天UTC 0点自动编译（北京时间8点）
 
 jobs:
   build:
