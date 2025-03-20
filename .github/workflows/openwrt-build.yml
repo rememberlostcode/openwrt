@@ -39,7 +39,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           ./scripts/feeds install -a
-          cat .config
+          cat .config | grep libluci
           [ -f ../.config ] && cp ../.config .config || make defconfig
 
       - name: Customize via SSH (可选)
