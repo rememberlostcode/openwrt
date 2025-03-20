@@ -38,8 +38,8 @@ jobs:
           cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-          ./scripts/feeds install -a -f
-          cat .config | grep libluci
+          ./scripts/feeds install -a
+          cat .config | grep luci
           [ -f ../.config ] && cp ../.config .config || make defconfig
 
       - name: Customize via SSH (可选)
