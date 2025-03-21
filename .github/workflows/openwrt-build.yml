@@ -32,10 +32,10 @@ jobs:
           git clone --depth=1 $REPO_URL -b $REPO_BRANCH openwrt
           cd openwrt
           git branch
-      - name: Customize via SSH
-        uses: mxschmitt/action-tmate@v3.19
+          
       - name: Update feeds and apply config
         run: |
+          cd openwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           ./scripts/feeds install -a
