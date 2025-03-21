@@ -39,6 +39,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           ./scripts/feeds install -a
+          cat .config | grep parted
           cat .config | grep luci
           [ -f ../.config ] && cp ../.config .config || make defconfig
 
