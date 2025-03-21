@@ -48,7 +48,7 @@ jobs:
         if: ${{ env.SSH_ACTIONS == 'true' }}
         uses: mxschmitt/action-tmate@v3.19
         env:
-          SSH_ACTIONS: true  # 设为true启用SSH调试
+          SSH_ACTIONS: false  # 设为true启用SSH调试
 
       - name: Compile OpenWrt
         run: |
