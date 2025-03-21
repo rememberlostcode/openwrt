@@ -41,7 +41,7 @@ jobs:
           ./scripts/feeds install -a
           cat .config | grep parted
           cat .config | grep luci
-          [ -f ../.config ] && cp ../.config .config || make defconfig
+          # [ -f ../.config ] && cp ../.config .config || make defconfig
 
       - name: Customize via SSH (可选)
         if: ${{ env.SSH_ACTIONS == 'true' }}
