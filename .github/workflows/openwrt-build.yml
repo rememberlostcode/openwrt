@@ -29,19 +29,20 @@ jobs:
           REPO_URL: https://github.com/rememberlostcode/openwrt.git  # 替换为你的仓库
           REPO_BRANCH: v24.10.0
         run: |
-          git clone --depth=1 $REPO_URL -b $REPO_BRANCH openwrt
-          cd openwrt
+          git clone --depth=1 $REPO_URL -b $REPO_BRANCH hdwrt
+          cd hdwrt
           git branch
           
       - name: Update feeds and apply config
         run: |
-          cd openwrt
+          cd hdwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
           ./scripts/feeds install -a
           cat .config | grep parted
           cat .config | grep luci
           cat .config | grep PREINIT
+          git checkout .config
 
       - name: Customize via SSH (可选)
         if: ${{ env.SSH_ACTIONS == 'true' }}
@@ -51,11 +52,11 @@ jobs:
 
       - name: Compile OpenWrt
         run: |
-          cd openwrt
+          cd hdwrt
           make -j$(nproc) V=s
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4.6.1
         with:
-          name: openwrt-binaries
-          path: openwrt/bin/targets/*
+          name: hdwrt-binaries
+          path: hdwrt/bin/targets/*
