@@ -41,6 +41,7 @@ jobs:
           ./scripts/feeds install -a
           cat .config | grep parted
           cat .config | grep luci
+          cat .config | grep PREINIT
           # [ -f ../.config ] && cp ../.config .config || make defconfig
 
       - name: Customize via SSH (可选)
