@@ -172,6 +172,9 @@ ifdef CONFIG_TARGET_IMAGES_GZIP
   endef
 endif
 
+define Image/Build/Ext4
+    $(STAGING_DIR_HOST)/bin/make_ext4fs -L rootfs -l 209715200 -b 4096 -m 0 -T $(TIMESTAMP) $(call mkfs_target,$(1)) $(TARGET_DIR)
+endef
 
 # Disable noisy checks by default as in upstream
 DTC_WARN_FLAGS := \
