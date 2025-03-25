@@ -1,4 +1,4 @@
-name: Build OpenWrt
+name: Build HDWrt
 
 on:
   workflow_dispatch:  # 手动触发
